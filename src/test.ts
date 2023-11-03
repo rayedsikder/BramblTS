@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { BinaryToTextEncoding, createHmac } from 'crypto';
 import Ed25519 from './crypto/signing/ed25519/ed25519';
 import { SecretKey } from './crypto/signing/ed25519/ed25519_spec';
 
@@ -27,6 +28,24 @@ const checkSign = new Ed25519().sign(
   stringToUint8Array(''),
 );
 
+class HMAC {
+  private secretKey: string;
+  private algorithm: string;
+
+  constructor(secretKey: string, algorithm: string) {
+    this.secretKey = secretKey;
+    this.algorithm = algorithm;
+  }
+
+  compute(message: string, encoding: BinaryToTextEncoding = 'hex'): string {
+    const hmac = createHmac(this.algorithm, this.secretKey);
+    hmac.update(message);
+    return hmac.digest(encoding);
+  }
+}
+
+const hmac = new HMAC('9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60', 'sha512');
+
 const checkHex = uint8ArrayToHexString(checkSign);
 
 console.log(
@@ -34,6 +53,7 @@ console.log(
   checkSign,
   checkHex,
   new SecretKey(stringToUint8Array('9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60')),
+  hmac.compute('Hello world'),
 );
 
 console.log('from string...', fromHexString('9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60'));

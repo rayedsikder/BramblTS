@@ -1,8 +1,10 @@
-abstract class SigningKey {}
+// abstract class SigningKey {}
 
-abstract class VerificationKey {}
+// abstract class VerificationKey {}
 
-export class KeyPair<SK extends SigningKey, VK extends VerificationKey> {
+import * as spec from '../../../proto/quivr/models/shared'
+
+export class KeyPair<SK extends spec.quivr.models.SigningKey, VK extends spec.quivr.models.VerificationKey> {
   signingKey: SK;
   verificationKey: VK;
 

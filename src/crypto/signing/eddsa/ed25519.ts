@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import { SHA512 } from '../../../crypto/hash/sha';
 import {
   DOM2_PREFIX,
@@ -11,7 +12,6 @@ import {
   SECRET_KEY_SIZE,
   SIGNATURE_SIZE,
 } from './ec';
-import { randomBytes } from 'crypto';
 
 export class Ed25519 extends EC {
   private readonly defaultDigest = new SHA512();
@@ -36,8 +36,8 @@ export class Ed25519 extends EC {
   generatePublicKey(sk: Uint8Array, skOff: number, pk: Uint8Array, pkOff: number, digest?: SHA512): void {
     const d = digest || this.defaultDigest;
 
-    let h = Buffer.alloc(d.digestSize());
-    d.update(sk, skOff, skOff + SECRET_KEY_SIZE);
+    const h = Buffer.alloc(d.digestSize());
+    d.update(sk, skOff, SECRET_KEY_SIZE);
     d.doFinal(h, 0);
     const s = new Uint8Array(SCALAR_BYTES);
     this.pruneScalar(h, 0, s);
@@ -76,8 +76,6 @@ export class Ed25519 extends EC {
     // Update hash context with message hash
     digest.update(h, SCALAR_BYTES, SCALAR_BYTES);
     digest.update(message, messageOffset, messageLength);
-
-    // h = Buffer.alloc(digest.digestSize());
     digest.doFinal(h, 0);
 
     // Compute random scalar r and corresponding point R
@@ -129,7 +127,7 @@ export class Ed25519 extends EC {
     }
 
     // Compute the SHA-512 hash of the private key.
-    let h = new Uint8Array(this.defaultDigest.digestSize());
+    const h = new Uint8Array(this.defaultDigest.digestSize());
     this.defaultDigest.update(sk, skOffset, SECRET_KEY_SIZE);
     this.defaultDigest.doFinal(h, 0);
 
@@ -184,7 +182,7 @@ export class Ed25519 extends EC {
     }
 
     // Compute the SHA-512 hash of the private key.
-    let h = new Uint8Array(this.defaultDigest.digestSize());
+    const h = new Uint8Array(this.defaultDigest.digestSize());
     this.defaultDigest.update(sk, skOffset, SECRET_KEY_SIZE);
     this.defaultDigest.doFinal(h, 0);
 
@@ -230,15 +228,15 @@ export class Ed25519 extends EC {
     const S = signature.slice(signatureOffset + POINT_BYTES, signatureOffset + SIGNATURE_SIZE);
 
     // Check if the R and S components are valid.
-    if (!this.checkPointVar(R)) return false;
-    if (!this.checkScalarVar(S)) return false;
+    if (!super.checkPointVar(R)) return false;
+    if (!super.checkScalarVar(S)) return false;
 
     // Decode the public key.
     const pA = PointExt.create();
-    if (!this.decodePointVar(pk, pkOffset, { negate: true, r: pA })) return false;
+    if (!super.decodePointVar(pk, pkOffset, { negate: true, r: pA })) return false;
 
     // Compute the SHA-512 hash of the message and the other parameters.
-    let h = new Uint8Array(this.defaultDigest.digestSize());
+    const h = new Uint8Array(this.defaultDigest.digestSize());
     this._dom2(this.defaultDigest, phflag, context);
     this.defaultDigest.update(R, 0, POINT_BYTES);
     this.defaultDigest.update(pk, pkOffset, POINT_BYTES);
@@ -249,19 +247,19 @@ export class Ed25519 extends EC {
     const k = this.reduceScalar(h);
 
     // Decode the S component of the signature and the scalar value k.
-    const nS = new Int32Array(SCALAR_INTS);
-    this.decodeScalar(S, 0, nS);
+    const nS = new Int32Array(SCALAR_INTS).fill(0);
+    super.decodeScalar(S, 0, nS);
 
-    const nA = new Int32Array(SCALAR_INTS);
-    this.decodeScalar(k, 0, nA);
+    const nA = new Int32Array(SCALAR_INTS).fill(0);
+    super.decodeScalar(k, 0, nA);
 
     // Compute the point R' = nS * B + nA * A, where B is the standard base point and A is the public key.
     const pR = PointAccum.create();
-    this.scalarMultStraussVar(nS, nA, pA, pR);
+    super.scalarMultStraussVar(nS, nA, pA, pR);
 
     // Encode the point R' and check if it matches the R component of the signature.
     const check = new Uint8Array(POINT_BYTES);
-    this.encodePoint(pR, check, 0);
+    super.encodePoint(pR, check, 0);
     return check.join() === R.join();
   }
 
@@ -293,10 +291,10 @@ export class Ed25519 extends EC {
     messageLength: number;
     signature: Uint8Array;
     signatureOffset: number;
-    pk?: Uint8Array | null;
-    pkOffset?: number | null;
-    context?: Uint8Array | null;
-    phflag?: number | null;
+    pk?: Uint8Array;
+    pkOffset?: number;
+    context?: Uint8Array;
+    phflag?: number;
   }): void {
     if (!sk.length) {
       throw new Error('Secret key must not be empty');
@@ -327,8 +325,8 @@ export class Ed25519 extends EC {
     }
 
     const phf = phflag ?? 0x00; // facilitate Prehash Functionality
-    const ctx = context || new Uint8Array(0);
-  
+    const ctx = context ?? new Uint8Array(0);
+
     if (pk != null && pkOffset != null) {
       // do signing with pk and context
       this.implSignWithPrivateKeyAndPublicKey(
@@ -378,23 +376,23 @@ export class Ed25519 extends EC {
   }: {
     sk: Uint8Array;
     skOffset: number;
-    pk?: Uint8Array | null;
-    pkOffset?: number | null;
+    pk?: Uint8Array;
+    pkOffset?: number;
     context: Uint8Array;
-    phSha?: SHA512 | null;
-    ph?: Uint8Array | null;
-    phOffset?: number | null;
+    phSha?: SHA512;
+    ph?: Uint8Array;
+    phOffset?: number;
     signature: Uint8Array;
     signatureOffset: number;
   }): void {
     const phflag = 0x01; // facilitate Prehash Functionality
-    const phOff = phOffset || 0;
+    const phOff = phOffset ?? 0;
 
-    if (!phSha && !ph) {
+    if (phSha == null && ph == null) {
       throw new Error('Prehash is null');
     }
 
-    if (!phSha && ph) {
+    if (phSha == null && ph != null) {
       this.sign({
         sk,
         skOffset,
@@ -408,9 +406,9 @@ export class Ed25519 extends EC {
         signature,
         signatureOffset,
       });
-    } else if (phSha && !ph) {
-      let m = new Uint8Array(PREHASH_SIZE);
-      if (PREHASH_SIZE !== phSha.doFinal(m, 0)) {
+    } else if (phSha != null && ph == null) {
+      const m = new Uint8Array(PREHASH_SIZE);
+      if (PREHASH_SIZE != phSha.doFinal(m, 0)) {
         throw new Error('Prehash Invalid');
       }
       this.sign({
@@ -447,13 +445,13 @@ export class Ed25519 extends EC {
     signatureOffset: number;
     pk: Uint8Array;
     pkOffset: number;
-    context?: Uint8Array | null;
+    context?: Uint8Array;
     message: Uint8Array;
     messageOffset: number;
     messageLength: number;
   }): boolean {
     const phflag = 0x00;
-    const ctx = context || new Uint8Array(0);
+    const ctx = context ?? new Uint8Array(0);
 
     return this._implVerify(
       signature,
@@ -491,21 +489,21 @@ export class Ed25519 extends EC {
     pk: Uint8Array;
     pkOffset: number;
     context: Uint8Array;
-    ph?: Uint8Array | null;
-    phSha?: SHA512 | null;
+    ph?: Uint8Array;
+    phSha?: SHA512;
     phOff: number;
   }): boolean {
     const phflag = 0x01;
 
-    if (!phSha && !ph) {
+    if (phSha == null && ph == null) {
       throw new Error('Prehash is null');
     }
 
-    if (!phSha && ph) {
+    if (phSha == null && ph != null) {
       return this._implVerify(signature, signatureOffset, pk, pkOffset, context, phflag, ph, phOff, PREHASH_SIZE);
-    } else if (phSha && !ph) {
-      let m = new Uint8Array(PREHASH_SIZE);
-      if (PREHASH_SIZE !== phSha.doFinal(m, 0)) {
+    } else if (phSha != null && ph == null) {
+      const m = new Uint8Array(PREHASH_SIZE);
+      if (PREHASH_SIZE != phSha.doFinal(m, 0)) {
         throw new Error('Prehash as Sha Invalid');
       }
       return this._implVerify(signature, signatureOffset, pk, pkOffset, context, phflag, m, 0, m.length);
