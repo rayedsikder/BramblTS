@@ -52,8 +52,16 @@ console.log(
   'checking signature',
   checkSign,
   checkHex,
-  new SecretKey(stringToUint8Array('9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60')),
+  // new SecretKey(stringToUint8Array('9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60')).bytes,
   hmac.compute('Hello world'),
 );
 
-console.log('from string...', fromHexString('9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60'));
+// console.log('from string...', fromHexString('9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60'));
+
+// Check getVerificationKey method
+const checkVerificationKey = new Ed25519();
+const result = checkVerificationKey.getVerificationKey(
+  new SecretKey(stringToUint8Array('9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60')),
+);
+
+console.log('result ... ', uint8ArrayToHexString(result?.bytes));
