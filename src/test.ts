@@ -1,7 +1,7 @@
 import { SHA512 } from './crypto/hash/sha';
 import Ed25519 from './crypto/signing/ed25519/ed25519';
 import { SecretKey } from './crypto/signing/ed25519/ed25519_spec';
-import { EC } from './crypto/signing/eddsa/ec';
+// import { EC } from './crypto/signing/eddsa/ec';
 // import fs from 'fs';
 
 function stringToUint8Array(str: string): Uint8Array {
@@ -22,7 +22,7 @@ function stringToUint8Array(str: string): Uint8Array {
 // );
 
 // console.log('checking signature', checkSign);
-console.log('string', stringToUint8Array('9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60'));
+// console.log('string', stringToUint8Array('9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60'));
 
 const publicKey = new Ed25519().getVerificationKey(
   new SecretKey(stringToUint8Array('9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60')),
@@ -47,5 +47,5 @@ console.log('hash2', hash2);
 // console.log('third...', thirdParamParse);
 
 
-const newCmov = new EC();
-console.log('new log', newCmov.cmov(10, 0, [], 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 0))
+// const newCmov = new EC();
+// console.log('new log', newCmov.cmov(1, 0, [1, 2, 3, 4, 5], 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 0))
