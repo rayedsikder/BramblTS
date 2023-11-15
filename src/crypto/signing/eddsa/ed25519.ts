@@ -12,6 +12,11 @@ import {
   SIGNATURE_SIZE,
 } from './ec';
 
+function setRange(target: Uint8Array, start: number, end: number, source: Uint8Array, sourceStart: number = 0): void {
+  target.copyWithin(start, sourceStart, sourceStart + (end - start));
+  target.set(source.slice(sourceStart, sourceStart + (end - start)), start);
+}
+
 export class Ed25519 extends EC {
   private defaultDigest = new SHA512();
   // private random = randomBytes;
@@ -95,11 +100,16 @@ export class Ed25519 extends EC {
 
     // Compute scalar k and signature scalar S
     const k = this.reduceScalar(h);
+    console.log('s -> ', s);
     const S = this.calculateS(r, k, s);
 
     // Copy R and S values into signature array
-    signature.set(R, signatureOffset);
-    signature.set(S, signatureOffset + POINT_BYTES);
+    // signature.set(R, signatureOffset);
+    // signature.set(S, signatureOffset + POINT_BYTES);
+
+    // console.log('signature from eddsa -> ', S);
+    setRange(signature, signatureOffset, signatureOffset + POINT_BYTES, R);
+    setRange(signature, signatureOffset + POINT_BYTES, signatureOffset + POINT_BYTES + SCALAR_BYTES, S);
   }
 
   /// Computes the Ed25519 signature of a message using a private key.
@@ -228,6 +238,8 @@ export class Ed25519 extends EC {
     const R = signature.slice(signatureOffset, signatureOffset + POINT_BYTES);
     const S = signature.slice(signatureOffset + POINT_BYTES, signatureOffset + SIGNATURE_SIZE);
 
+    // console.log('S -> ', S);
+
     // Check if the R and S components are valid.
     if (!this.checkPointVar(R)) return false;
     if (!this.checkScalarVar(S)) return false;
@@ -255,6 +267,7 @@ export class Ed25519 extends EC {
     this.decodeScalar(k, 0, nA);
 
     // Compute the point R' = nS * B + nA * A, where B is the standard base point and A is the public key.
+    // console.log('nS -> ', nS);
     const pR = PointAccum.create();
     this.scalarMultStraussVar(nS, nA, pA, pR);
 
@@ -328,6 +341,8 @@ export class Ed25519 extends EC {
 
     const phf = phflag ?? 0x00; // facilitate Prehash Functionality
     const ctx = context ?? new Uint8Array(0);
+
+    console.log('phf -> ', pk != null && pkOffset != null);
 
     if (pk != null && pkOffset != null) {
       // do signing with pk and context

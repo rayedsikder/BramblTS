@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-constant-condition */
 /*
@@ -45,14 +46,9 @@ export class EC {
   private _precompBase: Int32Array;
 
   constructor() {
-    // const precompute = this._precompute();
-    // this._precompBaseTable = precompute[0];
-    // this._precompBase = precompute[1];
-
     const precompute = this._precompute();
     this._precompBaseTable = precompute[0];
     this._precompBase = precompute[1];
-    // console.log('precompBaseTable ... ', this._precompBaseTable);
   }
 
   mulAddTo256(x: Int32Array, y: Int32Array, zz: Int32Array): number {
@@ -96,38 +92,19 @@ export class EC {
 
   cmov(len: number, mask: number, x: Int32Array, xOff: number, z: Int32Array, zOff: number): void {
     let maskv = mask;
-    // console.log('zoff ... ', zOff, xOff)
-    // console.log('maskv ...', maskv)
 
     maskv = maskv & 1 ? -(maskv & 1) : maskv & 1;
     let zi: number;
     for (let i = 0; i < len; i++) {
       zi = z[zOff + i];
       const diff = zi ^ x[xOff + i];
-      // console.log('zi from cmov ... ', diff);
       zi ^= diff & maskv;
       z[zOff + i] = Number(zi);
     }
-    // console.log('maskv after ... ', maskv)
   }
-
-  // cmov(len: number, mask: number, x: Int32Array, xOff: number, z: Int32Array, zOff: number): void {
-  //   let maskv: number = mask;
-  //   maskv = -(maskv & 1);
-  //   for (let i = 0; i < len; i++) {
-  //     let z_i: number = z[zOff + i];
-  //     const diff: number = z_i ^ x[xOff + i];
-  //     z_i ^= diff & maskv;
-  //     z[zOff + i] = z_i;
-  //   }
-
-  //   // console.log('z from cmov ... ', z);
-  // }
 
   cadd(len: number, mask: number, x: Int32Array, y: Int32Array, z: Int32Array): number {
     const m = -BigInt(mask & 1) & M;
-    // const mNew = Number(M)
-    // console.log('m from cadd ... ', m);
     let c = BigInt(0);
 
     for (let i = 0; i < len; i++) {
@@ -196,6 +173,7 @@ export class EC {
     for (let i = 0; i < t.length; i++) {
       this.encode32(t[i], result, i * 4);
     }
+    console.log('result -> ', result);
     return this.reduceScalar(result);
   }
 
@@ -262,13 +240,13 @@ export class EC {
 
   decodeScalar(k: Uint8Array, kOff: number, n: Int32Array): void {
     this.decode32(k, kOff, n, 0, SCALAR_INTS);
+    // console.log('decodeScalar -> ', n);
   }
 
   encode24(n: number, bs: Uint8Array, off: number): void {
     bs[off] = n & 0xff;
     bs[off + 1] = (n >>> 8) & 0xff;
     bs[off + 2] = (n >>> 16) & 0xff;
-    // console.log('bs from encode24', bs);
   }
 
   encode32(n: number, bs: Uint8Array, off: number): void {
@@ -373,7 +351,6 @@ export class EC {
     }
 
     x25519_field.apm(r.y, r.x, B, A);
-    // console.log('P -> ', p);
     x25519_field.apm(p.y, p.x, d, c);
     x25519_field.mul2(A, C, A);
     x25519_field.mul2(B, D, B);
@@ -513,8 +490,6 @@ export class EC {
     for (let i = 0; i < PRECOMP_POINTS; i++) {
       const mask = ((i ^ index) - 1) >> 31;
 
-      // console.log('precompBase ... ', this._precompBase[1919]);
-
       this.cmov(x25519_field.SIZE, mask, this._precompBase, off, p.ypxH, 0);
       off += x25519_field.SIZE;
       this.cmov(x25519_field.SIZE, mask, this._precompBase, off, p.ymxH, 0);
@@ -522,10 +497,6 @@ export class EC {
       this.cmov(x25519_field.SIZE, mask, this._precompBase, off, p.xyd, 0);
       off += x25519_field.SIZE;
     }
-
-    // console.log('p from point lookup ... ', p);
-
-    // console.log('p form ec ... ', p[0]?.ypxH);
   }
 
   pointPrecompVar(p: PointExt, count: number): PointExt[] {
@@ -554,7 +525,6 @@ export class EC {
     x25519_field.one(p.y);
     x25519_field.one(p.z);
     x25519_field.zero(p.t);
-    // console.log('p -> ', p);
   }
 
   _precompute(): [PointExt[], Int32Array] {
@@ -570,8 +540,6 @@ export class EC {
     //   this.pointCopyExt({ x: B_x.slice(), y: B_y.slice(), z: x25519_field.create(), t: x25519_field.create() }),
     // );
 
-    // console.log('b from precompute ... ', B_y);
-
     x25519_field.copy(B_x, 0, b.x, 0);
     x25519_field.copy(B_y, 0, b.y, 0);
 
@@ -580,9 +548,6 @@ export class EC {
     const precompBaseTable: PointExt[] = this.pointPrecompVar(b, 1 << (WNAF_WIDTH_BASE - 2));
 
     const p: PointAccum = PointAccum.create();
-
-    // console.log('B_x -> ', B_x);
-    // console.log('B_y -> ', B_y);
 
     // const p: PointAccum = {
     //   x: B_x.slice(),
@@ -672,213 +637,289 @@ export class EC {
     r[SCALAR_BYTES - 1] = toByte(r[SCALAR_BYTES - 1] | 0x40);
   }
 
+  // reduceScalar(n: Uint8Array): Uint8Array {
+  //   const L0 = BigInt('0xfcf5d3ed');
+  //   const L1 = BigInt('0x012631a6');
+  //   const L2 = BigInt('0x079cd658');
+  //   const L3 = BigInt('0xff9dea2f');
+  //   const L4 = BigInt('0x000014df');
+
+  //   const maxInt32 = BigInt(2 ** 31);
+  //   const maxUint32 = BigInt(2 ** 32);
+
+  //   let signedL0 = L0;
+  //   if (L0 >= maxInt32) {
+  //     signedL0 -= maxUint32;
+  //   }
+  //   let signedL1 = L1;
+  //   if (L1 >= maxInt32) {
+  //     signedL1 -= maxUint32;
+  //   }
+  //   let signedL2 = L2;
+  //   if (L2 >= maxInt32) {
+  //     signedL2 -= maxUint32;
+  //   }
+  //   let signedL3 = L3;
+  //   if (L3 >= maxInt32) {
+  //     signedL3 -= maxUint32;
+  //   }
+  //   let signedL4 = L4;
+  //   if (L4 >= maxInt32) {
+  //     signedL3 -= maxUint32;
+  //   }
+
+  //   const M28L = BigInt('0x0fffffff');
+  //   const M32L = BigInt('0xffffffff');
+  //   let x00 = BigInt(this.decode32v(n, 0)) & M32L;
+  //   let x01 = BigInt(this.decode24(n, 4) << 4) & M32L;
+  //   let x02 = BigInt(this.decode32v(n, 7)) & M32L;
+  //   let x03 = BigInt(this.decode24(n, 11) << 4) & M32L;
+  //   let x04 = BigInt(this.decode32v(n, 14)) & M32L;
+  //   let x05 = BigInt(this.decode24(n, 18) << 4) & M32L;
+  //   let x06 = BigInt(this.decode32v(n, 21)) & M32L;
+  //   let x07 = BigInt(this.decode24(n, 25) << 4) & M32L;
+  //   let x08 = BigInt(this.decode32v(n, 28)) & M32L;
+  //   let x09 = BigInt(this.decode24(n, 32) << 4) & M32L;
+  //   let x10 = BigInt(this.decode32v(n, 35)) & M32L;
+  //   let x11 = BigInt(this.decode24(n, 39) << 4) & M32L;
+  //   let x12 = BigInt(this.decode32v(n, 42)) & M32L;
+  //   let x13 = BigInt(this.decode24(n, 46) << 4) & M32L;
+  //   let x14 = BigInt(this.decode32v(n, 49)) & M32L;
+  //   let x15 = BigInt(this.decode24(n, 53) << 4) & M32L;
+  //   let x16 = BigInt(this.decode32v(n, 56)) & M32L;
+  //   let x17 = BigInt(this.decode24(n, 60) << 4) & M32L;
+  //   const x18 = BigInt(n[63]) & BigInt('0xff');
+  //   let t = BigInt(0);
+
+  //   x09 -= x18 * signedL0;
+
+  //   x10 -= x18 * signedL1;
+  //   x11 -= x18 * signedL2;
+  //   x12 -= x18 * signedL3;
+  //   x13 -= x18 * signedL4;
+
+  //   x17 += x16 >> BigInt(28);
+  //   x16 &= M28L;
+
+  //   x08 -= x17 * signedL0;
+  //   x09 -= x17 * signedL1;
+  //   x10 -= x17 * signedL2;
+  //   x11 -= x17 * signedL3;
+  //   x12 -= x17 * signedL4;
+
+  //   x07 -= x16 * signedL0;
+  //   x08 -= x16 * signedL1;
+  //   x09 -= x16 * signedL2;
+  //   x10 -= x16 * signedL3;
+  //   x11 -= x16 * signedL4;
+
+  //   x15 += x14 >> BigInt(28);
+  //   x14 &= M28L;
+
+  //   x06 -= x15 * signedL0;
+  //   x07 -= x15 * signedL1;
+  //   x08 -= x15 * signedL2;
+  //   x09 -= x15 * signedL3;
+  //   x10 -= x15 * signedL4;
+
+  //   x05 -= x14 * signedL0;
+  //   x06 -= x14 * signedL1;
+  //   x07 -= x14 * signedL2;
+  //   x08 -= x14 * signedL3;
+  //   x09 -= x14 * signedL4;
+
+  //   x13 += x12 >> BigInt(28);
+  //   x12 &= M28L;
+
+  //   x04 -= x13 * signedL0;
+  //   x05 -= x13 * signedL1;
+  //   x06 -= x13 * signedL2;
+  //   x07 -= x13 * signedL3;
+  //   x08 -= x13 * signedL4;
+
+  //   x12 += x11 >> BigInt(28);
+  //   x11 &= M28L;
+
+  //   x03 -= x12 * signedL0;
+  //   x04 -= x12 * signedL1;
+  //   x05 -= x12 * signedL2;
+  //   x06 -= x12 * signedL3;
+  //   x07 -= x12 * signedL4;
+
+  //   x11 += x10 >> BigInt(28);
+  //   x10 &= M28L;
+
+  //   x02 -= x11 * signedL0;
+  //   x03 -= x11 * signedL1;
+  //   x04 -= x11 * signedL2;
+  //   x05 -= x11 * signedL3;
+  //   x06 -= x11 * signedL4;
+
+  //   x10 += x09 >> BigInt(28);
+  //   x09 &= M28L;
+
+  //   x01 -= x10 * signedL0;
+  //   x02 -= x10 * signedL1;
+  //   x03 -= x10 * signedL2;
+  //   x04 -= x10 * signedL3;
+  //   x05 -= x10 * signedL4;
+
+  //   x08 += x07 >> BigInt(28);
+  //   x07 &= M28L;
+
+  //   x09 += x08 >> BigInt(28);
+  //   x08 &= M28L;
+
+  //   t = x08 >> BigInt(27);
+  //   x09 += BigInt(t);
+
+  //   x00 -= x09 * signedL0;
+  //   x01 -= x09 * signedL1;
+  //   x02 -= x09 * signedL2;
+  //   x03 -= x09 * signedL3;
+  //   x04 -= x09 * signedL4;
+
+  //   x01 += x00 >> BigInt(28);
+  //   x00 &= M28L;
+
+  //   x02 += x01 >> BigInt(28);
+  //   x01 &= M28L;
+
+  //   x03 += x02 >> BigInt(28);
+  //   x02 &= M28L;
+
+  //   x04 += x03 >> BigInt(28);
+  //   x03 &= M28L;
+
+  //   x05 += x04 >> BigInt(28);
+  //   x04 &= M28L;
+
+  //   x06 += x05 >> BigInt(28);
+  //   x05 &= M28L;
+
+  //   x07 += x06 >> BigInt(28);
+  //   x06 &= M28L;
+
+  //   x08 += x07 >> BigInt(28);
+  //   x07 &= M28L;
+
+  //   x09 = x08 >> BigInt(28);
+  //   x08 &= M28L;
+  //   x09 -= t;
+
+  //   x00 += x09 & BigInt(L0);
+  //   x01 += x09 & BigInt(L1);
+  //   x02 += x09 & BigInt(L2);
+  //   x03 += x09 & BigInt(L3);
+  //   x04 += x09 & BigInt(L4);
+
+  //   x01 += x00 >> BigInt(28);
+  //   x00 &= M28L;
+  //   x02 += x01 >> BigInt(28);
+  //   x01 &= M28L;
+  //   x03 += x02 >> BigInt(28);
+  //   x02 &= M28L;
+  //   x04 += x03 >> BigInt(28);
+  //   x03 &= M28L;
+  //   x05 += x04 >> BigInt(28);
+  //   x04 &= M28L;
+  //   x06 += x05 >> BigInt(28);
+  //   x05 &= M28L;
+  //   x07 += x06 >> BigInt(28);
+  //   x06 &= M28L;
+  //   x08 += x07 >> BigInt(28);
+  //   x07 &= M28L;
+
+  //   const r = new Uint8Array(SCALAR_BYTES);
+  //   this.encode56(x00 | (x01 << BigInt(28)), r, 0);
+  //   this.encode56(x02 | (x03 << BigInt(28)), r, 7);
+  //   this.encode56(x04 | (x05 << BigInt(28)), r, 14);
+  //   this.encode56(x06 | (x07 << BigInt(28)), r, 21);
+  //   this.encode32(Number(x08), r, 28);
+  //   return r;
+  // }
+
   reduceScalar(n: Uint8Array): Uint8Array {
-    const L0 = BigInt('0xfcf5d3ed');
-    const L1 = BigInt('0x012631a6');
-    const L2 = BigInt('0x079cd658');
-    const L3 = BigInt('0xff9dea2f');
-    const L4 = BigInt('0x000014df');
+    const L0 = Long.fromString('0xfcf5d3ed', true);
+    const L1 = Long.fromString('0x012631a6', true);
+    const L2 = Long.fromString('0x079cd658', true);
+    const L3 = Long.fromString('0xff9dea2f', true);
+    const L4 = Long.fromString('0x000014df', true);
 
-    const maxInt32 = BigInt(2 ** 31);
-    const maxUint32 = BigInt(2 ** 32);
+    const M28L = Long.fromString('0x0fffffff', true);
+    const M32L = Long.fromString('0xffffffff', true);
 
-    let signedL0 = L0;
-    if (L0 >= maxInt32) {
-      signedL0 -= maxUint32;
-    }
-    let signedL1 = L1;
-    if (L1 >= maxInt32) {
-      signedL1 -= maxUint32;
-    }
-    let signedL2 = L2;
-    if (L2 >= maxInt32) {
-      signedL2 -= maxUint32;
-    }
-    let signedL3 = L3;
-    if (L3 >= maxInt32) {
-      signedL3 -= maxUint32;
-    }
-    let signedL4 = L4;
-    if (L4 >= maxInt32) {
-      signedL3 -= maxUint32;
-    }
+    let x00 = Long.fromInt(this.decode32v(n, 0)).and(M32L);
+    let x01 = Long.fromInt((this.decode24(n, 4)) << 4).and(M32L);
+    let x02 = Long.fromInt(this.decode32v(n, 7)).and(M32L);
+    let x03 = Long.fromInt((this.decode24(n, 11)) << 4).and(M32L);
+    let x04 = Long.fromInt(this.decode32v(n, 14)).and(M32L);
+    let x05 = Long.fromInt((this.decode32v(n, 18)) << 4).and(M32L);
+    let x06 = Long.fromInt(this.decode32v(n, 21)).and(M32L);
+    let x07 = Long.fromInt((this.decode24(n, 25)) << 4).and(M32L);
+    let x08 = Long.fromInt(this.decode32v(n, 28)).and(M32L);
+    let x09 = Long.fromInt((this.decode24(n, 32)) << 4).and(M32L);
+    let x10 = Long.fromInt(this.decode32v(n, 35)).and(M32L);
+    let x11 = Long.fromInt((this.decode24(n, 39)) << 4).and(M32L);
+    let x12 = Long.fromInt(this.decode32v(n, 42)).and(M32L);
+    let x13 = Long.fromInt((this.decode24(n, 46)) << 4).and(M32L);
+    let x14 = Long.fromInt(this.decode32v(n, 49)).and(M32L);
+    let x15 = Long.fromInt((this.decode24(n, 53)) << 4).and(M32L);
+    let x16 = Long.fromInt(this.decode32v(n, 56)).and(M32L);
+    let x17 = Long.fromInt((this.decode24(n, 60)) << 4).and(M32L);
+    const x18 = Long.fromInt(n[63]).and(Long.fromString('0xff', true));
 
-    console.log(signedL0);
-    console.log('L0 ... ', L0);
-    console.log('L1 ... ', L1);
-    console.log('L2 ... ', L2);
-    console.log('L3 ... ', L3);
-    console.log('L4 ... ', L4);
+    let t: Long;
 
-    const M28L = BigInt('0x0fffffff');
-    const M32L = BigInt('0xffffffff');
-    let x00 = BigInt(this.decode32v(n, 0)) & M32L;
-    let x01 = BigInt(this.decode24(n, 4) << 4) & M32L;
-    let x02 = BigInt(this.decode32v(n, 7)) & M32L;
-    let x03 = BigInt(this.decode24(n, 11) << 4) & M32L;
-    let x04 = BigInt(this.decode32v(n, 14)) & M32L;
-    let x05 = BigInt(this.decode24(n, 18) << 4) & M32L;
-    let x06 = BigInt(this.decode32v(n, 21)) & M32L;
-    let x07 = BigInt(this.decode24(n, 25) << 4) & M32L;
-    let x08 = BigInt(this.decode32v(n, 28)) & M32L;
-    let x09 = BigInt(this.decode24(n, 32) << 4) & M32L;
-    let x10 = BigInt(this.decode32v(n, 35)) & M32L;
-    let x11 = BigInt(this.decode24(n, 39) << 4) & M32L;
-    let x12 = BigInt(this.decode32v(n, 42)) & M32L;
-    let x13 = BigInt(this.decode24(n, 46) << 4) & M32L;
-    let x14 = BigInt(this.decode32v(n, 49)) & M32L;
-    let x15 = BigInt(this.decode24(n, 53) << 4) & M32L;
-    let x16 = BigInt(this.decode32v(n, 56)) & M32L;
-    let x17 = BigInt(this.decode24(n, 60) << 4) & M32L;
-    const x18 = BigInt(n[63]) & BigInt('0xff');
-    let t = BigInt(0);
+    x09 = x09.subtract(x18.multiply(L0));
+    x10 = x10.subtract(x18.multiply(L1));
+    x11 = x11.subtract(x18.multiply(L2));
+    x12 = x12.subtract(x18.multiply(L3));
+    x13 = x13.subtract(x18.multiply(L4));
 
-    x09 -= x18 * signedL0;
+    x17 = x17.add(x16.shiftRight(28));
+    x16 = x16.and(M28L);
 
-    x10 -= x18 * signedL1;
-    x11 -= x18 * signedL2;
-    x12 -= x18 * signedL3;
-    x13 -= x18 * signedL4;
+    x08 = x08.subtract(x17.multiply(L0));
+    x09 = x09.subtract(x17.multiply(L1));
+    x10 = x10.subtract(x17.multiply(L2));
+    x11 = x11.subtract(x17.multiply(L3));
+    x12 = x12.subtract(x17.multiply(L4));
 
-    x17 += x16 >> BigInt(28);
-    x16 &= M28L;
+    x07 = x07.subtract(x16.multiply(L0));
+    x08 = x08.subtract(x16.multiply(L1));
+    x09 = x09.subtract(x16.multiply(L2));
+    x10 = x10.subtract(x16.multiply(L3));
+    x11 = x11.subtract(x16.multiply(L4));
 
-    x08 -= x17 * signedL0;
-    x09 -= x17 * signedL1;
-    x10 -= x17 * signedL2;
-    x11 -= x17 * signedL3;
-    x12 -= x17 * signedL4;
+    x15 = x15.add(x14.shiftRight(28));
+    x14 = x14.and(M28L);
 
-    x07 -= x16 * signedL0;
-    x08 -= x16 * signedL1;
-    x09 -= x16 * signedL2;
-    x10 -= x16 * signedL3;
-    x11 -= x16 * signedL4;
+    x06 = x06.subtract(x15.multiply(L0));
+    x07 = x07.subtract(x15.multiply(L1));
+    x08 = x08.subtract(x15.multiply(L2));
+    x09 = x09.subtract(x15.multiply(L3));
+    x10 = x10.subtract(x15.multiply(L4));
 
-    x15 += x14 >> BigInt(28);
-    x14 &= M28L;
+    x05 = x05.subtract(x14.multiply(L0));
+    x06 = x06.subtract(x14.multiply(L1));
+    x07 = x07.subtract(x14.multiply(L2));
+    x08 = x08.subtract(x14.multiply(L3));
+    x09 = x09.subtract(x14.multiply(L4));
 
-    x06 -= x15 * signedL0;
-    x07 -= x15 * signedL1;
-    x08 -= x15 * signedL2;
-    x09 -= x15 * signedL3;
-    x10 -= x15 * signedL4;
+    x13 = x13.add(x12.shiftRight(28));
+    x12 = x12.and(M28L);
 
-    x05 -= x14 * signedL0;
-    x06 -= x14 * signedL1;
-    x07 -= x14 * signedL2;
-    x08 -= x14 * signedL3;
-    x09 -= x14 * signedL4;
+    x04 = x04.subtract(x13.multiply(L0));
+    x05 = x05.subtract(x13.multiply(L1));
+    x06 = x06.subtract(x13.multiply(L2));
+    x07 = x07.subtract(x13.multiply(L3));
+    x08 = x08.subtract(x13.multiply(L4));
 
-    x13 += x12 >> BigInt(28);
-    x12 &= M28L;
+    x12 = x12.add(x11.shiftRight(28));
+    x10 = x10.and(M28L);
 
-    x04 -= x13 * signedL0;
-    x05 -= x13 * signedL1;
-    x06 -= x13 * signedL2;
-    x07 -= x13 * signedL3;
-    x08 -= x13 * signedL4;
 
-    x12 += x11 >> BigInt(28);
-    x11 &= M28L;
-
-    x03 -= x12 * signedL0;
-    x04 -= x12 * signedL1;
-    x05 -= x12 * signedL2;
-    x06 -= x12 * signedL3;
-    x07 -= x12 * signedL4;
-
-    x11 += x10 >> BigInt(28);
-    x10 &= M28L;
-
-    x02 -= x11 * signedL0;
-    x03 -= x11 * signedL1;
-    x04 -= x11 * signedL2;
-    x05 -= x11 * signedL3;
-    x06 -= x11 * signedL4;
-
-    x10 += x09 >> BigInt(28);
-    x09 &= M28L;
-
-    x01 -= x10 * signedL0;
-    x02 -= x10 * signedL1;
-    x03 -= x10 * signedL2;
-    x04 -= x10 * signedL3;
-    x05 -= x10 * signedL4;
-
-    x08 += x07 >> BigInt(28);
-    x07 &= M28L;
-
-    x09 += x08 >> BigInt(28);
-    x08 &= M28L;
-
-    t = x08 >> BigInt(27);
-    x09 += BigInt(t);
-
-    x00 -= x09 * signedL0;
-    x01 -= x09 * signedL1;
-    x02 -= x09 * signedL2;
-    x03 -= x09 * signedL3;
-    x04 -= x09 * signedL4;
-
-    x01 += x00 >> BigInt(28);
-    x00 &= M28L;
-
-    x02 += x01 >> BigInt(28);
-    x01 &= M28L;
-
-    x03 += x02 >> BigInt(28);
-    x02 &= M28L;
-
-    x04 += x03 >> BigInt(28);
-    x03 &= M28L;
-
-    x05 += x04 >> BigInt(28);
-    x04 &= M28L;
-
-    x06 += x05 >> BigInt(28);
-    x05 &= M28L;
-
-    x07 += x06 >> BigInt(28);
-    x06 &= M28L;
-
-    x08 += x07 >> BigInt(28);
-    x07 &= M28L;
-
-    x09 = x08 >> BigInt(28);
-    x08 &= M28L;
-    x09 -= t;
-
-    x00 += x09 & BigInt(L0);
-    x01 += x09 & BigInt(L1);
-    x02 += x09 & BigInt(L2);
-    x03 += x09 & BigInt(L3);
-    x04 += x09 & BigInt(L4);
-
-    x01 += x00 >> BigInt(28);
-    x00 &= M28L;
-    x02 += x01 >> BigInt(28);
-    x01 &= M28L;
-    x03 += x02 >> BigInt(28);
-    x02 &= M28L;
-    x04 += x03 >> BigInt(28);
-    x03 &= M28L;
-    x05 += x04 >> BigInt(28);
-    x04 &= M28L;
-    x06 += x05 >> BigInt(28);
-    x05 &= M28L;
-    x07 += x06 >> BigInt(28);
-    x06 &= M28L;
-    x08 += x07 >> BigInt(28);
-    x07 &= M28L;
-
-    const r = new Uint8Array(SCALAR_BYTES);
-    this.encode56(x00 | (x01 << BigInt(28)), r, 0);
-    this.encode56(x02 | (x03 << BigInt(28)), r, 7);
-    this.encode56(x04 | (x05 << BigInt(28)), r, 14);
-    this.encode56(x06 | (x07 << BigInt(28)), r, 21);
-    this.encode32(Number(x08), r, 28);
-    return r;
   }
 
   scalarMultBase(k: Uint8Array, r: PointAccum): void {
@@ -935,9 +976,16 @@ export class EC {
     // Set the window size to 5.
     const width = 5;
 
+    console.log('nb -> ', nb);
+    // console.log('np -> ', np);
+    // console.log('p -> ', p);
+    // console.log('r -> ', r);
+
     // Compute the WNAF of the scalar values nb and np.
     const wsB = this.getWNAF(nb, WNAF_WIDTH_BASE);
     const wsP = this.getWNAF(np, width);
+
+    // console.log('nb -> ', nb);
 
     // Compute a precomputed table of points based on the input point p.
     const tp = this.pointPrecompVar(p, 1 << (width - 2));

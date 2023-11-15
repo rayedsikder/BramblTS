@@ -25,10 +25,6 @@ export function addOne2(z: Int32Array, zOff: number): void {
 }
 
 export function apm(x: Int32Array, y: Int32Array, zp: Int32Array, zm: Int32Array): void {
-  // console.log('x -> ', x);
-  // console.log('y -> ', y);
-  // console.log('zp -> ', zp);
-  // console.log('zm -> ', zm);
   for (let i = 0; i < SIZE; i++) {
     const xi = x[i];
     const yi = y[i];
@@ -38,7 +34,6 @@ export function apm(x: Int32Array, y: Int32Array, zp: Int32Array, zm: Int32Array
 }
 
 export function carry(z: Int32Array) {
-  // console.log("carry -> z", z);
   let z0 = z[0],
     z1 = z[1],
     z2 = z[2],

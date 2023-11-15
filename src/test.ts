@@ -50,6 +50,10 @@ console.log('third...', checkSign);
 const newShuffle = new EC();
 newShuffle.shuffle2(2);
 
+const verify = new Ed25519().verify(checkSign, stringToUint8Array(''), publicKey);
+
+console.log('verified -> ', verify);
+
 
 // const newCmov = new EC();
 // console.log('new log', newCmov.cmov(1, 0, [1, 2, 3, 4, 5], 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 0))
