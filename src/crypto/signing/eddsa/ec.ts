@@ -917,9 +917,7 @@ export class EC {
     x08 = x08.subtract(x13.multiply(L4));
 
     x12 = x12.add(x11.shiftRight(28));
-    x10 = x10.and(M28L);
-
-
+    x11 = x11.and(M28L);
   }
 
   scalarMultBase(k: Uint8Array, r: PointAccum): void {
