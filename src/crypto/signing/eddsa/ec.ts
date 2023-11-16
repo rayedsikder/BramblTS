@@ -256,9 +256,9 @@ export class EC {
     bs[off + 3] = (n >>> 24) & 0xff;
   }
 
-  encode56(n: bigint, bs: Uint8Array, off: number): void {
-    this.encode32(Number(n & BigInt(0xffffffff)), bs, off);
-    this.encode24(Number((n >> BigInt(32)) & BigInt(0xffffff)), bs, off + 4);
+  encode56(n: Long, bs: Uint8Array, off: number): void {
+    this.encode32(n.toInt(), bs, off);
+    this.encode24(n.shiftRightUnsigned(32).toInt(), bs, off + 4);
   }
 
   encodePoint(p: PointAccum, r: Uint8Array, rOff: number): void {
@@ -637,397 +637,397 @@ export class EC {
     r[SCALAR_BYTES - 1] = toByte(r[SCALAR_BYTES - 1] | 0x40);
   }
 
-  reduceScalar(n: Uint8Array): Uint8Array {
-    const L0 = BigInt('0xfcf5d3ed');
-    const L1 = BigInt('0x012631a6');
-    const L2 = BigInt('0x079cd658');
-    const L3 = BigInt('0xff9dea2f');
-    const L4 = BigInt('0x000014df');
-
-    const maxInt32 = BigInt(2 ** 31);
-    const maxUint32 = BigInt(2 ** 32);
-
-    let signedL0 = L0;
-    if (L0 >= maxInt32) {
-      signedL0 -= maxUint32;
-    }
-    let signedL1 = L1;
-    if (L1 >= maxInt32) {
-      signedL1 -= maxUint32;
-    }
-    let signedL2 = L2;
-    if (L2 >= maxInt32) {
-      signedL2 -= maxUint32;
-    }
-    let signedL3 = L3;
-    if (L3 >= maxInt32) {
-      signedL3 -= maxUint32;
-    }
-    let signedL4 = L4;
-    if (L4 >= maxInt32) {
-      signedL3 -= maxUint32;
-    }
-
-    const M28L = BigInt('0x0fffffff');
-    const M32L = BigInt('0xffffffff');
-    let x00 = BigInt(this.decode32v(n, 0)) & M32L;
-    let x01 = BigInt(this.decode24(n, 4) << 4) & M32L;
-    let x02 = BigInt(this.decode32v(n, 7)) & M32L;
-    let x03 = BigInt(this.decode24(n, 11) << 4) & M32L;
-    let x04 = BigInt(this.decode32v(n, 14)) & M32L;
-    let x05 = BigInt(this.decode24(n, 18) << 4) & M32L;
-    let x06 = BigInt(this.decode32v(n, 21)) & M32L;
-    let x07 = BigInt(this.decode24(n, 25) << 4) & M32L;
-    let x08 = BigInt(this.decode32v(n, 28)) & M32L;
-    let x09 = BigInt(this.decode24(n, 32) << 4) & M32L;
-    let x10 = BigInt(this.decode32v(n, 35)) & M32L;
-    let x11 = BigInt(this.decode24(n, 39) << 4) & M32L;
-    let x12 = BigInt(this.decode32v(n, 42)) & M32L;
-    let x13 = BigInt(this.decode24(n, 46) << 4) & M32L;
-    let x14 = BigInt(this.decode32v(n, 49)) & M32L;
-    let x15 = BigInt(this.decode24(n, 53) << 4) & M32L;
-    let x16 = BigInt(this.decode32v(n, 56)) & M32L;
-    let x17 = BigInt(this.decode24(n, 60) << 4) & M32L;
-    const x18 = BigInt(n[63]) & BigInt('0xff');
-    let t = BigInt(0);
-
-    x09 -= x18 * signedL0;
-
-    x10 -= x18 * signedL1;
-    x11 -= x18 * signedL2;
-    x12 -= x18 * signedL3;
-    x13 -= x18 * signedL4;
-
-    x17 += x16 >> BigInt(28);
-    x16 &= M28L;
-
-    x08 -= x17 * signedL0;
-    x09 -= x17 * signedL1;
-    x10 -= x17 * signedL2;
-    x11 -= x17 * signedL3;
-    x12 -= x17 * signedL4;
-
-    x07 -= x16 * signedL0;
-    x08 -= x16 * signedL1;
-    x09 -= x16 * signedL2;
-    x10 -= x16 * signedL3;
-    x11 -= x16 * signedL4;
-
-    x15 += x14 >> BigInt(28);
-    x14 &= M28L;
-
-    x06 -= x15 * signedL0;
-    x07 -= x15 * signedL1;
-    x08 -= x15 * signedL2;
-    x09 -= x15 * signedL3;
-    x10 -= x15 * signedL4;
-
-    x05 -= x14 * signedL0;
-    x06 -= x14 * signedL1;
-    x07 -= x14 * signedL2;
-    x08 -= x14 * signedL3;
-    x09 -= x14 * signedL4;
-
-    x13 += x12 >> BigInt(28);
-    x12 &= M28L;
-
-    x04 -= x13 * signedL0;
-    x05 -= x13 * signedL1;
-    x06 -= x13 * signedL2;
-    x07 -= x13 * signedL3;
-    x08 -= x13 * signedL4;
-
-    x12 += x11 >> BigInt(28);
-    x11 &= M28L;
-
-    x03 -= x12 * signedL0;
-    x04 -= x12 * signedL1;
-    x05 -= x12 * signedL2;
-    x06 -= x12 * signedL3;
-    x07 -= x12 * signedL4;
-
-    x11 += x10 >> BigInt(28);
-    x10 &= M28L;
-
-    x02 -= x11 * signedL0;
-    x03 -= x11 * signedL1;
-    x04 -= x11 * signedL2;
-    x05 -= x11 * signedL3;
-    x06 -= x11 * signedL4;
-
-    x10 += x09 >> BigInt(28);
-    x09 &= M28L;
-
-    x01 -= x10 * signedL0;
-    x02 -= x10 * signedL1;
-    x03 -= x10 * signedL2;
-    x04 -= x10 * signedL3;
-    x05 -= x10 * signedL4;
-
-    x08 += x07 >> BigInt(28);
-    x07 &= M28L;
-
-    x09 += x08 >> BigInt(28);
-    x08 &= M28L;
-
-    t = x08 >> BigInt(27);
-    x09 += BigInt(t);
-
-    x00 -= x09 * signedL0;
-    x01 -= x09 * signedL1;
-    x02 -= x09 * signedL2;
-    x03 -= x09 * signedL3;
-    x04 -= x09 * signedL4;
-
-    x01 += x00 >> BigInt(28);
-    x00 &= M28L;
-
-    x02 += x01 >> BigInt(28);
-    x01 &= M28L;
-
-    x03 += x02 >> BigInt(28);
-    x02 &= M28L;
-
-    x04 += x03 >> BigInt(28);
-    x03 &= M28L;
-
-    x05 += x04 >> BigInt(28);
-    x04 &= M28L;
-
-    x06 += x05 >> BigInt(28);
-    x05 &= M28L;
-
-    x07 += x06 >> BigInt(28);
-    x06 &= M28L;
-
-    x08 += x07 >> BigInt(28);
-    x07 &= M28L;
-
-    x09 = x08 >> BigInt(28);
-    x08 &= M28L;
-    x09 -= t;
-
-    x00 += x09 & BigInt(L0);
-    x01 += x09 & BigInt(L1);
-    x02 += x09 & BigInt(L2);
-    x03 += x09 & BigInt(L3);
-    x04 += x09 & BigInt(L4);
-
-    x01 += x00 >> BigInt(28);
-    x00 &= M28L;
-    x02 += x01 >> BigInt(28);
-    x01 &= M28L;
-    x03 += x02 >> BigInt(28);
-    x02 &= M28L;
-    x04 += x03 >> BigInt(28);
-    x03 &= M28L;
-    x05 += x04 >> BigInt(28);
-    x04 &= M28L;
-    x06 += x05 >> BigInt(28);
-    x05 &= M28L;
-    x07 += x06 >> BigInt(28);
-    x06 &= M28L;
-    x08 += x07 >> BigInt(28);
-    x07 &= M28L;
-
-    const r = new Uint8Array(SCALAR_BYTES);
-    this.encode56(x00 | (x01 << BigInt(28)), r, 0);
-    this.encode56(x02 | (x03 << BigInt(28)), r, 7);
-    this.encode56(x04 | (x05 << BigInt(28)), r, 14);
-    this.encode56(x06 | (x07 << BigInt(28)), r, 21);
-    this.encode32(Number(x08), r, 28);
-    return r;
-  }
-
   // reduceScalar(n: Uint8Array): Uint8Array {
-  //   const L0 = Long.fromString('0xfcf5d3ed', true);
-  //   const L1 = Long.fromString('0x012631a6', true);
-  //   const L2 = Long.fromString('0x079cd658', true);
-  //   const L3 = Long.fromString('0xff9dea2f', true);
-  //   const L4 = Long.fromString('0x000014df', true);
+  //   const L0 = BigInt('0xfcf5d3ed');
+  //   const L1 = BigInt('0x012631a6');
+  //   const L2 = BigInt('0x079cd658');
+  //   const L3 = BigInt('0xff9dea2f');
+  //   const L4 = BigInt('0x000014df');
 
-  //   const M28L = Long.fromString('0x0fffffff', true);
-  //   const M32L = Long.fromString('0xffffffff', true);
+  //   const maxInt32 = BigInt(2 ** 31);
+  //   const maxUint32 = BigInt(2 ** 32);
 
-  //   let x00 = Long.fromInt(this.decode32v(n, 0)).and(M32L);
-  //   let x01 = Long.fromInt((this.decode24(n, 4)) << 4).and(M32L);
-  //   let x02 = Long.fromInt(this.decode32v(n, 7)).and(M32L);
-  //   let x03 = Long.fromInt((this.decode24(n, 11)) << 4).and(M32L);
-  //   let x04 = Long.fromInt(this.decode32v(n, 14)).and(M32L);
-  //   let x05 = Long.fromInt((this.decode32v(n, 18)) << 4).and(M32L);
-  //   let x06 = Long.fromInt(this.decode32v(n, 21)).and(M32L);
-  //   let x07 = Long.fromInt((this.decode24(n, 25)) << 4).and(M32L);
-  //   let x08 = Long.fromInt(this.decode32v(n, 28)).and(M32L);
-  //   let x09 = Long.fromInt((this.decode24(n, 32)) << 4).and(M32L);
-  //   let x10 = Long.fromInt(this.decode32v(n, 35)).and(M32L);
-  //   let x11 = Long.fromInt((this.decode24(n, 39)) << 4).and(M32L);
-  //   let x12 = Long.fromInt(this.decode32v(n, 42)).and(M32L);
-  //   let x13 = Long.fromInt((this.decode24(n, 46)) << 4).and(M32L);
-  //   let x14 = Long.fromInt(this.decode32v(n, 49)).and(M32L);
-  //   let x15 = Long.fromInt((this.decode24(n, 53)) << 4).and(M32L);
-  //   let x16 = Long.fromInt(this.decode32v(n, 56)).and(M32L);
-  //   let x17 = Long.fromInt((this.decode24(n, 60)) << 4).and(M32L);
-  //   const x18 = Long.fromInt(n[63]).and(Long.fromString('0xff', true));
+  //   let signedL0 = L0;
+  //   if (L0 >= maxInt32) {
+  //     signedL0 -= maxUint32;
+  //   }
+  //   let signedL1 = L1;
+  //   if (L1 >= maxInt32) {
+  //     signedL1 -= maxUint32;
+  //   }
+  //   let signedL2 = L2;
+  //   if (L2 >= maxInt32) {
+  //     signedL2 -= maxUint32;
+  //   }
+  //   let signedL3 = L3;
+  //   if (L3 >= maxInt32) {
+  //     signedL3 -= maxUint32;
+  //   }
+  //   let signedL4 = L4;
+  //   if (L4 >= maxInt32) {
+  //     signedL3 -= maxUint32;
+  //   }
 
-  //   let t: Long = Long.fromInt(0);
+  //   const M28L = BigInt('0x0fffffff');
+  //   const M32L = BigInt('0xffffffff');
+  //   let x00 = BigInt(this.decode32v(n, 0)) & M32L;
+  //   let x01 = BigInt(this.decode24(n, 4) << 4) & M32L;
+  //   let x02 = BigInt(this.decode32v(n, 7)) & M32L;
+  //   let x03 = BigInt(this.decode24(n, 11) << 4) & M32L;
+  //   let x04 = BigInt(this.decode32v(n, 14)) & M32L;
+  //   let x05 = BigInt(this.decode24(n, 18) << 4) & M32L;
+  //   let x06 = BigInt(this.decode32v(n, 21)) & M32L;
+  //   let x07 = BigInt(this.decode24(n, 25) << 4) & M32L;
+  //   let x08 = BigInt(this.decode32v(n, 28)) & M32L;
+  //   let x09 = BigInt(this.decode24(n, 32) << 4) & M32L;
+  //   let x10 = BigInt(this.decode32v(n, 35)) & M32L;
+  //   let x11 = BigInt(this.decode24(n, 39) << 4) & M32L;
+  //   let x12 = BigInt(this.decode32v(n, 42)) & M32L;
+  //   let x13 = BigInt(this.decode24(n, 46) << 4) & M32L;
+  //   let x14 = BigInt(this.decode32v(n, 49)) & M32L;
+  //   let x15 = BigInt(this.decode24(n, 53) << 4) & M32L;
+  //   let x16 = BigInt(this.decode32v(n, 56)) & M32L;
+  //   let x17 = BigInt(this.decode24(n, 60) << 4) & M32L;
+  //   const x18 = BigInt(n[63]) & BigInt('0xff');
+  //   let t = BigInt(0);
 
-  //   x09 = x09.subtract(x18.multiply(L0));
-  //   x10 = x10.subtract(x18.multiply(L1));
-  //   x11 = x11.subtract(x18.multiply(L2));
-  //   x12 = x12.subtract(x18.multiply(L3));
-  //   x13 = x13.subtract(x18.multiply(L4));
+  //   x09 -= x18 * signedL0;
 
-  //   x17 = x17.add(x16.shiftRight(28));
-  //   x16 = x16.and(M28L);
+  //   x10 -= x18 * signedL1;
+  //   x11 -= x18 * signedL2;
+  //   x12 -= x18 * signedL3;
+  //   x13 -= x18 * signedL4;
 
-  //   x08 = x08.subtract(x17.multiply(L0));
-  //   x09 = x09.subtract(x17.multiply(L1));
-  //   x10 = x10.subtract(x17.multiply(L2));
-  //   x11 = x11.subtract(x17.multiply(L3));
-  //   x12 = x12.subtract(x17.multiply(L4));
+  //   x17 += x16 >> BigInt(28);
+  //   x16 &= M28L;
 
-  //   x07 = x07.subtract(x16.multiply(L0));
-  //   x08 = x08.subtract(x16.multiply(L1));
-  //   x09 = x09.subtract(x16.multiply(L2));
-  //   x10 = x10.subtract(x16.multiply(L3));
-  //   x11 = x11.subtract(x16.multiply(L4));
+  //   x08 -= x17 * signedL0;
+  //   x09 -= x17 * signedL1;
+  //   x10 -= x17 * signedL2;
+  //   x11 -= x17 * signedL3;
+  //   x12 -= x17 * signedL4;
 
-  //   x15 = x15.add(x14.shiftRight(28));
-  //   x14 = x14.and(M28L);
+  //   x07 -= x16 * signedL0;
+  //   x08 -= x16 * signedL1;
+  //   x09 -= x16 * signedL2;
+  //   x10 -= x16 * signedL3;
+  //   x11 -= x16 * signedL4;
 
-  //   x06 = x06.subtract(x15.multiply(L0));
-  //   x07 = x07.subtract(x15.multiply(L1));
-  //   x08 = x08.subtract(x15.multiply(L2));
-  //   x09 = x09.subtract(x15.multiply(L3));
-  //   x10 = x10.subtract(x15.multiply(L4));
+  //   x15 += x14 >> BigInt(28);
+  //   x14 &= M28L;
 
-  //   x05 = x05.subtract(x14.multiply(L0));
-  //   x06 = x06.subtract(x14.multiply(L1));
-  //   x07 = x07.subtract(x14.multiply(L2));
-  //   x08 = x08.subtract(x14.multiply(L3));
-  //   x09 = x09.subtract(x14.multiply(L4));
+  //   x06 -= x15 * signedL0;
+  //   x07 -= x15 * signedL1;
+  //   x08 -= x15 * signedL2;
+  //   x09 -= x15 * signedL3;
+  //   x10 -= x15 * signedL4;
 
-  //   x13 = x13.add(x12.shiftRight(28));
-  //   x12 = x12.and(M28L);
+  //   x05 -= x14 * signedL0;
+  //   x06 -= x14 * signedL1;
+  //   x07 -= x14 * signedL2;
+  //   x08 -= x14 * signedL3;
+  //   x09 -= x14 * signedL4;
 
-  //   x04 = x04.subtract(x13.multiply(L0));
-  //   x05 = x05.subtract(x13.multiply(L1));
-  //   x06 = x06.subtract(x13.multiply(L2));
-  //   x07 = x07.subtract(x13.multiply(L3));
-  //   x08 = x08.subtract(x13.multiply(L4));
+  //   x13 += x12 >> BigInt(28);
+  //   x12 &= M28L;
 
-  //   x12 = x12.add(x11.shiftRight(28));
-  //   x11 = x11.and(M28L);
+  //   x04 -= x13 * signedL0;
+  //   x05 -= x13 * signedL1;
+  //   x06 -= x13 * signedL2;
+  //   x07 -= x13 * signedL3;
+  //   x08 -= x13 * signedL4;
 
-  //   x03 = x03.subtract(x12.multiply(L0));
-  //   x04 = x04.subtract(x12.multiply(L1));
-  //   x05 = x05.subtract(x12.multiply(L2));
-  //   x06 = x06.subtract(x12.multiply(L3));
-  //   x07 = x07.subtract(x12.multiply(L4));
+  //   x12 += x11 >> BigInt(28);
+  //   x11 &= M28L;
 
-  //   x11 = x11.add(x10.shiftRight(28));
-  //   x10 = x10.and(M28L);
+  //   x03 -= x12 * signedL0;
+  //   x04 -= x12 * signedL1;
+  //   x05 -= x12 * signedL2;
+  //   x06 -= x12 * signedL3;
+  //   x07 -= x12 * signedL4;
 
-  //   x02 = x02.subtract(x11.multiply(L0));
-  //   x03 = x03.subtract(x11.multiply(L1));
-  //   x04 = x04.subtract(x11.multiply(L2));
-  //   x05 = x05.subtract(x11.multiply(L3));
-  //   x06 = x06.subtract(x11.multiply(L4));
+  //   x11 += x10 >> BigInt(28);
+  //   x10 &= M28L;
 
-  //   x10 = x10.add(x09.shiftRight(28));
-  //   x09 = x09.and(M28L);
+  //   x02 -= x11 * signedL0;
+  //   x03 -= x11 * signedL1;
+  //   x04 -= x11 * signedL2;
+  //   x05 -= x11 * signedL3;
+  //   x06 -= x11 * signedL4;
 
-  //   x01 = x01.subtract(x10.multiply(L0));
-  //   x02 = x02.subtract(x10.multiply(L1));
-  //   x03 = x03.subtract(x10.multiply(L2));
-  //   x04 = x04.subtract(x10.multiply(L3));
-  //   x05 = x05.subtract(x10.multiply(L4));
+  //   x10 += x09 >> BigInt(28);
+  //   x09 &= M28L;
 
-  //   x08 = x08.add(x07.shiftRight(28));
-  //   x07 = x07.and(M28L);
+  //   x01 -= x10 * signedL0;
+  //   x02 -= x10 * signedL1;
+  //   x03 -= x10 * signedL2;
+  //   x04 -= x10 * signedL3;
+  //   x05 -= x10 * signedL4;
 
-  //   x09 = x09.add(x08.shiftRight(28));
-  //   x08 = x08.and(M28L);
+  //   x08 += x07 >> BigInt(28);
+  //   x07 &= M28L;
 
-  //   t = x08.shiftRight(27);
+  //   x09 += x08 >> BigInt(28);
+  //   x08 &= M28L;
 
-  //   x09 = x09.add(t);
+  //   t = x08 >> BigInt(27);
+  //   x09 += BigInt(t);
 
-  //   x00 = x00.subtract(x09.multiply(L0));
-  //   x01 = x01.subtract(x09.multiply(L1));
-  //   x02 = x02.subtract(x09.multiply(L2));
-  //   x03 = x03.subtract(x09.multiply(L3));
-  //   x04 = x04.subtract(x09.multiply(L4));
+  //   x00 -= x09 * signedL0;
+  //   x01 -= x09 * signedL1;
+  //   x02 -= x09 * signedL2;
+  //   x03 -= x09 * signedL3;
+  //   x04 -= x09 * signedL4;
 
-  //   x01 = x01.add(x00.shiftRight(28));
-  //   x00 = x00.and(M28L);
+  //   x01 += x00 >> BigInt(28);
+  //   x00 &= M28L;
 
-  //   x02 = x02.add(x01.shiftRight(28));
-  //   x01 = x01.and(M28L);
+  //   x02 += x01 >> BigInt(28);
+  //   x01 &= M28L;
 
-  //   x03 = x03.add(x02.shiftRight(28));
-  //   x02 = x02.and(M28L);
+  //   x03 += x02 >> BigInt(28);
+  //   x02 &= M28L;
 
-  //   x04 = x04.add(x03.shiftRight(28));
-  //   x03 = x03.and(M28L);
+  //   x04 += x03 >> BigInt(28);
+  //   x03 &= M28L;
 
-  //   x05 = x05.add(x04.shiftRight(28));
-  //   x04 = x04.and(M28L);
+  //   x05 += x04 >> BigInt(28);
+  //   x04 &= M28L;
 
-  //   x06 = x06.add(x05.shiftRight(28));
-  //   x05 = x05.and(M28L);
+  //   x06 += x05 >> BigInt(28);
+  //   x05 &= M28L;
 
-  //   x07 = x07.add(x06.shiftRight(28));
-  //   x06 = x06.and(M28L);
+  //   x07 += x06 >> BigInt(28);
+  //   x06 &= M28L;
 
-  //   x08 = x08.add(x07.shiftRight(28));
-  //   x07 = x07.and(M28L);
+  //   x08 += x07 >> BigInt(28);
+  //   x07 &= M28L;
 
-  //   x09 = x08.shiftRight(28);
-  //   x08 = x08.and(M28L);
+  //   x09 = x08 >> BigInt(28);
+  //   x08 &= M28L;
+  //   x09 -= t;
 
-  //   x09 = x09.subtract(t);
+  //   x00 += x09 & BigInt(L0);
+  //   x01 += x09 & BigInt(L1);
+  //   x02 += x09 & BigInt(L2);
+  //   x03 += x09 & BigInt(L3);
+  //   x04 += x09 & BigInt(L4);
 
-  //   x00 = x00.add(x09.and(L0));
-  //   x01 = x01.add(x09.and(L1));
-  //   x02 = x02.add(x09.and(L2));
-  //   x03 = x03.add(x09.and(L3));
-  //   x04 = x04.add(x09.and(L4));
-
-  //   x01 = x01.add(x00.shiftRight(28));
-  //   x00 = x00.and(M28L);
-
-  //   x02 = x02.add(x01.shiftRight(28));
-  //   x01 = x01.and(M28L);
-
-  //   x03 = x03.add(x02.shiftRight(28));
-  //   x02 = x02.and(M28L);
-
-  //   x04 = x04.add(x03.shiftRight(28));
-  //   x03 = x03.and(M28L);
-
-  //   x05 = x05.add(x04.shiftRight(28));
-  //   x04 = x04.and(M28L);
-
-  //   x06 = x06.add(x05.shiftRight(28));
-  //   x05 = x05.and(M28L);
-
-  //   x07 = x07.add(x06.shiftRight(28));
-  //   x06 = x06.and(M28L);
-
-  //   x08 = x08.add(x07.shiftRight(28));
-  //   x07 = x07.and(M28L);
+  //   x01 += x00 >> BigInt(28);
+  //   x00 &= M28L;
+  //   x02 += x01 >> BigInt(28);
+  //   x01 &= M28L;
+  //   x03 += x02 >> BigInt(28);
+  //   x02 &= M28L;
+  //   x04 += x03 >> BigInt(28);
+  //   x03 &= M28L;
+  //   x05 += x04 >> BigInt(28);
+  //   x04 &= M28L;
+  //   x06 += x05 >> BigInt(28);
+  //   x05 &= M28L;
+  //   x07 += x06 >> BigInt(28);
+  //   x06 &= M28L;
+  //   x08 += x07 >> BigInt(28);
+  //   x07 &= M28L;
 
   //   const r = new Uint8Array(SCALAR_BYTES);
-
-  //   this.encode56(x00.or(x01.shiftLeft(28)), r, 0);
-  //   this.encode56(x02.or(x03.shiftLeft(28)), r, 7);
-  //   this.encode56(x04.or(x05.shiftLeft(28)), r, 14);
-  //   this.encode56(x06.or(x07.shiftLeft(28)), r, 21);
+  //   this.encode56(x00 | (x01 << BigInt(28)), r, 0);
+  //   this.encode56(x02 | (x03 << BigInt(28)), r, 7);
+  //   this.encode56(x04 | (x05 << BigInt(28)), r, 14);
+  //   this.encode56(x06 | (x07 << BigInt(28)), r, 21);
   //   this.encode32(Number(x08), r, 28);
-
   //   return r;
   // }
+
+  reduceScalar(n: Uint8Array): Uint8Array {
+    const L0 = Long.fromString('0xfcf5d3ed', true);
+    const L1 = Long.fromString('0x012631a6', true);
+    const L2 = Long.fromString('0x079cd658', true);
+    const L3 = Long.fromString('0xff9dea2f', true);
+    const L4 = Long.fromString('0x000014df', true);
+
+    const M28L = Long.fromString('0x0fffffff', true);
+    const M32L = Long.fromString('0xffffffff', true);
+
+    let x00 = Long.fromInt(this.decode32v(n, 0)).and(M32L);
+    let x01 = Long.fromInt((this.decode24(n, 4)) << 4).and(M32L);
+    let x02 = Long.fromInt(this.decode32v(n, 7)).and(M32L);
+    let x03 = Long.fromInt((this.decode24(n, 11)) << 4).and(M32L);
+    let x04 = Long.fromInt(this.decode32v(n, 14)).and(M32L);
+    let x05 = Long.fromInt((this.decode32v(n, 18)) << 4).and(M32L);
+    let x06 = Long.fromInt(this.decode32v(n, 21)).and(M32L);
+    let x07 = Long.fromInt((this.decode24(n, 25)) << 4).and(M32L);
+    let x08 = Long.fromInt(this.decode32v(n, 28)).and(M32L);
+    let x09 = Long.fromInt((this.decode24(n, 32)) << 4).and(M32L);
+    let x10 = Long.fromInt(this.decode32v(n, 35)).and(M32L);
+    let x11 = Long.fromInt((this.decode24(n, 39)) << 4).and(M32L);
+    let x12 = Long.fromInt(this.decode32v(n, 42)).and(M32L);
+    let x13 = Long.fromInt((this.decode24(n, 46)) << 4).and(M32L);
+    let x14 = Long.fromInt(this.decode32v(n, 49)).and(M32L);
+    let x15 = Long.fromInt((this.decode24(n, 53)) << 4).and(M32L);
+    let x16 = Long.fromInt(this.decode32v(n, 56)).and(M32L);
+    let x17 = Long.fromInt((this.decode24(n, 60)) << 4).and(M32L);
+    const x18 = Long.fromInt(n[63]).and(Long.fromString('0xff', true));
+
+    let t: Long = Long.fromInt(0);
+
+    x09 = x09.subtract(x18.multiply(L0));
+    x10 = x10.subtract(x18.multiply(L1));
+    x11 = x11.subtract(x18.multiply(L2));
+    x12 = x12.subtract(x18.multiply(L3));
+    x13 = x13.subtract(x18.multiply(L4));
+
+    x17 = x17.add(x16.shiftRight(28));
+    x16 = x16.and(M28L);
+
+    x08 = x08.subtract(x17.multiply(L0));
+    x09 = x09.subtract(x17.multiply(L1));
+    x10 = x10.subtract(x17.multiply(L2));
+    x11 = x11.subtract(x17.multiply(L3));
+    x12 = x12.subtract(x17.multiply(L4));
+
+    x07 = x07.subtract(x16.multiply(L0));
+    x08 = x08.subtract(x16.multiply(L1));
+    x09 = x09.subtract(x16.multiply(L2));
+    x10 = x10.subtract(x16.multiply(L3));
+    x11 = x11.subtract(x16.multiply(L4));
+
+    x15 = x15.add(x14.shiftRight(28));
+    x14 = x14.and(M28L);
+
+    x06 = x06.subtract(x15.multiply(L0));
+    x07 = x07.subtract(x15.multiply(L1));
+    x08 = x08.subtract(x15.multiply(L2));
+    x09 = x09.subtract(x15.multiply(L3));
+    x10 = x10.subtract(x15.multiply(L4));
+
+    x05 = x05.subtract(x14.multiply(L0));
+    x06 = x06.subtract(x14.multiply(L1));
+    x07 = x07.subtract(x14.multiply(L2));
+    x08 = x08.subtract(x14.multiply(L3));
+    x09 = x09.subtract(x14.multiply(L4));
+
+    x13 = x13.add(x12.shiftRight(28));
+    x12 = x12.and(M28L);
+
+    x04 = x04.subtract(x13.multiply(L0));
+    x05 = x05.subtract(x13.multiply(L1));
+    x06 = x06.subtract(x13.multiply(L2));
+    x07 = x07.subtract(x13.multiply(L3));
+    x08 = x08.subtract(x13.multiply(L4));
+
+    x12 = x12.add(x11.shiftRight(28));
+    x11 = x11.and(M28L);
+
+    x03 = x03.subtract(x12.multiply(L0));
+    x04 = x04.subtract(x12.multiply(L1));
+    x05 = x05.subtract(x12.multiply(L2));
+    x06 = x06.subtract(x12.multiply(L3));
+    x07 = x07.subtract(x12.multiply(L4));
+
+    x11 = x11.add(x10.shiftRight(28));
+    x10 = x10.and(M28L);
+
+    x02 = x02.subtract(x11.multiply(L0));
+    x03 = x03.subtract(x11.multiply(L1));
+    x04 = x04.subtract(x11.multiply(L2));
+    x05 = x05.subtract(x11.multiply(L3));
+    x06 = x06.subtract(x11.multiply(L4));
+
+    x10 = x10.add(x09.shiftRight(28));
+    x09 = x09.and(M28L);
+
+    x01 = x01.subtract(x10.multiply(L0));
+    x02 = x02.subtract(x10.multiply(L1));
+    x03 = x03.subtract(x10.multiply(L2));
+    x04 = x04.subtract(x10.multiply(L3));
+    x05 = x05.subtract(x10.multiply(L4));
+
+    x08 = x08.add(x07.shiftRight(28));
+    x07 = x07.and(M28L);
+
+    x09 = x09.add(x08.shiftRight(28));
+    x08 = x08.and(M28L);
+
+    t = x08.shiftRight(27);
+
+    x09 = x09.add(t);
+
+    x00 = x00.subtract(x09.multiply(L0));
+    x01 = x01.subtract(x09.multiply(L1));
+    x02 = x02.subtract(x09.multiply(L2));
+    x03 = x03.subtract(x09.multiply(L3));
+    x04 = x04.subtract(x09.multiply(L4));
+
+    x01 = x01.add(x00.shiftRight(28));
+    x00 = x00.and(M28L);
+
+    x02 = x02.add(x01.shiftRight(28));
+    x01 = x01.and(M28L);
+
+    x03 = x03.add(x02.shiftRight(28));
+    x02 = x02.and(M28L);
+
+    x04 = x04.add(x03.shiftRight(28));
+    x03 = x03.and(M28L);
+
+    x05 = x05.add(x04.shiftRight(28));
+    x04 = x04.and(M28L);
+
+    x06 = x06.add(x05.shiftRight(28));
+    x05 = x05.and(M28L);
+
+    x07 = x07.add(x06.shiftRight(28));
+    x06 = x06.and(M28L);
+
+    x08 = x08.add(x07.shiftRight(28));
+    x07 = x07.and(M28L);
+
+    x09 = x08.shiftRight(28);
+    x08 = x08.and(M28L);
+
+    x09 = x09.subtract(t);
+
+    x00 = x00.add(x09.and(L0));
+    x01 = x01.add(x09.and(L1));
+    x02 = x02.add(x09.and(L2));
+    x03 = x03.add(x09.and(L3));
+    x04 = x04.add(x09.and(L4));
+
+    x01 = x01.add(x00.shiftRight(28));
+    x00 = x00.and(M28L);
+
+    x02 = x02.add(x01.shiftRight(28));
+    x01 = x01.and(M28L);
+
+    x03 = x03.add(x02.shiftRight(28));
+    x02 = x02.and(M28L);
+
+    x04 = x04.add(x03.shiftRight(28));
+    x03 = x03.and(M28L);
+
+    x05 = x05.add(x04.shiftRight(28));
+    x04 = x04.and(M28L);
+
+    x06 = x06.add(x05.shiftRight(28));
+    x05 = x05.and(M28L);
+
+    x07 = x07.add(x06.shiftRight(28));
+    x06 = x06.and(M28L);
+
+    x08 = x08.add(x07.shiftRight(28));
+    x07 = x07.and(M28L);
+
+    const r = new Uint8Array(SCALAR_BYTES);
+
+    this.encode56(x00.or(x01.shiftLeft(28)), r, 0);
+    this.encode56(x02.or(x03.shiftLeft(28)), r, 7);
+    this.encode56(x04.or(x05.shiftLeft(28)), r, 14);
+    this.encode56(x06.or(x07.shiftLeft(28)), r, 21);
+    this.encode32(Number(x08), r, 28);
+
+    return r;
+  }
 
   scalarMultBase(k: Uint8Array, r: PointAccum): void {
     this.pointSetNeutralAccum(r);

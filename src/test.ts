@@ -18,15 +18,15 @@ function stringToUint8Array(str: string): Uint8Array {
 }
 
 const checkSign = new Ed25519().sign(
-  new SecretKey(stringToUint8Array('9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60')),
+  new SecretKey(stringToUint8Array('4ccd089b28ff96da9db6c346ec114e0f5b8a319f35aba624da8cf6ed4fb8a6fb')),
   stringToUint8Array(''),
 );
 
 console.log('checking signature', checkSign);
-// console.log('string', stringToUint8Array('9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60'));
+// console.log('string', stringToUint8Array('4ccd089b28ff96da9db6c346ec114e0f5b8a319f35aba624da8cf6ed4fb8a6fb'));
 
 const publicKey = new Ed25519().getVerificationKey(
-  new SecretKey(stringToUint8Array('9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60')),
+  new SecretKey(stringToUint8Array('4ccd089b28ff96da9db6c346ec114e0f5b8a319f35aba624da8cf6ed4fb8a6fb')),
 );
 console.log('public key', publicKey);
 const buffer = Buffer.from(publicKey.bytes);
